@@ -1,0 +1,17 @@
+services:
+  kafka:
+    image: confluentinc/confluent-local:7.6.0
+    container_name: kafka-server
+    ports:
+      - "9092:9092"
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: goplay-kafka-ui
+    ports:
+      - "8090:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=GoPlay-Cluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    depends_on:
+      - kafka

@@ -1,0 +1,80 @@
+# =========================
+# Build folders
+# =========================
+target/
+build/
+out/
+*/target/
+*/build/
+*/out/
+
+# =========================
+# Java & Spring Boot
+# =========================
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+HELP.md
+
+# =========================
+# Maven
+# =========================
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+*/.gradle/
+.gradletasknamecache
+
+# =========================
+# IDEs (IntelliJ, VSCode, Eclipse, etc.)
+# =========================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+*.classpath
+*.project
+.springBeans
+.sts4-cache/
+
+# =========================
+# OS files & Logs
+# =========================
+.DS_Store
+Thumbs.db
+*.log
+logs/
+
+# =========================
+# Environment variables & Application Properties
+# =========================
+.env
+.env.*
+application-local.properties
+application-local.yml
+**/src/main/resources/application.properties
+**/src/main/resources/application.yml
+
+# =========================
+# Security / Secrets
+# =========================
+*firebase-adminsdk*.json
+goplay-firebase-adminsdk.json

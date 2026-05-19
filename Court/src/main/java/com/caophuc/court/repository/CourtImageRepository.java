@@ -1,0 +1,9 @@
+package com.caophuc.court.repository;
+
+import com.caophuc.court.model.CourtImage;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CourtImageRepository extends JpaRepository<CourtImage, Integer> {
+}
