@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class BookingResponse {
     private Integer id;
+    private Integer userId;
     private String courtName; // Tên sân
     private String courtAddress;
     private Double latitude;  // Thêm vĩ độ để dẫn đường
