@@ -14,6 +14,7 @@ import com.caophuc.payment.service.strategy.PaymentStrategy;
 import com.caophuc.payment.service.strategy.PaymentStrategyFactory;
 import com.caophuc.payment.util.PaymentStatus;
 // ... (Import các class Strategy của bạn) ...
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -162,23 +163,48 @@ public class PaymentServiceImpl implements PaymentService {
 
     // --- CÁC HÀM PRIVATE HỖ TRỢ ---
 
+//    private BookingDto getBookingAndCheckOwnership(Integer bookingId, Integer userId) {
+//        try {
+//            // Nhấc máy gọi FeignClient sang Booking Service
+//            BookingDto booking = bookingClient.getBookingById(bookingId);
+//
+//            if (booking == null) {
+//                throw new ResourceNotFoundException("Không tìm thấy đơn hàng");
+//            }
+//            if (!Objects.equals(booking.getUserId(), userId)) {
+//                throw new RuntimeException("Bạn không có quyền xem hoặc thao tác trên đơn hàng này.");
+//            }
+//            return booking;
+//        } catch (Exception e) {
+//            throw new RuntimeException("Lỗi khi kết nối với Booking Service: " + e.getMessage());
+//        }
+//    }
+
     private BookingDto getBookingAndCheckOwnership(Integer bookingId, Integer userId) {
+        BookingDto booking;
+
         try {
-            // Nhấc máy gọi FeignClient sang Booking Service
-            BookingDto booking = bookingClient.getBookingById(bookingId);
-
-            if (booking == null) {
-                throw new ResourceNotFoundException("Không tìm thấy đơn hàng");
-            }
-            if (!Objects.equals(booking.getUserId(), userId)) {
-                throw new RuntimeException("Bạn không có quyền xem hoặc thao tác trên đơn hàng này.");
-            }
-            return booking;
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi kết nối với Booking Service: " + e.getMessage());
+            // Chỉ bắt lỗi của FeignClient trong khối try này
+            booking = bookingClient.getBookingById(bookingId);
+        } catch (FeignException e) {
+            log.error("Lỗi Feign: {}", e.getMessage());
+            throw new RuntimeException("Lỗi mạng/quyền khi gọi Booking Service (Cổng 8084).");
         }
-    }
 
+        if (booking == null) {
+            throw new RuntimeException("Không tìm thấy đơn hàng");
+        }
+
+        // IN LOG ĐỂ TÌM THỦ PHẠM
+        log.info("Booking DTO trả về: {}", booking);
+        log.info("So sánh: DTO.UserId = {} | API truyền vào UserId = {}", booking.getUserId(), userId);
+
+        if (!Objects.equals(booking.getUserId(), userId)) {
+            throw new RuntimeException("Logic Error: Bạn không có quyền thao tác trên đơn hàng này.");
+        }
+
+        return booking;
+    }
     private Payment createInitialPayment(BookingDto booking, Integer userId) {
         return Payment.builder()
                 .bookingId(booking.getId()) // Lưu ID thay vì Object
