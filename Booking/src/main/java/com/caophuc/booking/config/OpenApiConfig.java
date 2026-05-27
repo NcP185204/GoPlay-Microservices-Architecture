@@ -23,7 +23,7 @@ public class OpenApiConfig {
                                 .name("Cao Phuc")
                                 .email("phuc@example.com")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8083").description("Local Server")
+                        new Server().url("/").description("API Gateway Server")
                 ));
     }
 }
