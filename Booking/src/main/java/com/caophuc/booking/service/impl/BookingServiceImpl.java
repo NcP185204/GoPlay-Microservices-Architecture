@@ -221,6 +221,7 @@ public class BookingServiceImpl implements BookingService {
 
         return BookingResponse.builder()
                 .id(booking.getId())
+                .userId(booking.getUserId())
                 .courtName(courtName) // Tên lấy được từ Court Service
                 .courtAddress(courtAddress) // Địa chỉ lấy được từ Court Service
                 .totalPrice(booking.getTotalPrice())
