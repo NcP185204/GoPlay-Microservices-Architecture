@@ -70,7 +70,7 @@ public class NotificationListener {
                     .build();
 
             notificationRepository.save(notification);
-            log.info("💾 Đã lưu Notification vào Database cho userId: {}", event.getUserId());
+            log.info("Đã lưu Notification vào Database cho userId: {}", event.getUserId());
         } catch (Exception e) {
             log.error("Lỗi khi lưu Notification vào Database. Lỗi: {}", e.getMessage());
             throw e; // Ném ra lỗi để khối try-catch ngoài cùng (Kafka listener) in ra lỗi tổng
