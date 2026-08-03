@@ -145,6 +145,38 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <!-- Khởi động JaCoCo Agent trước khi chạy Test -->
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <!-- Tự động sinh báo cáo HTML ngay sau khi Test chạy xong -->
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+
+                    <excludes>
+                        <exclude>**/config/**</exclude>
+                        <exclude>**/dto/**</exclude>
+                        <exclude>**/exception/**</exclude>
+                        <exclude>**/model/**</exclude>
+                        <exclude>**/repository/**</exclude>
+
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
