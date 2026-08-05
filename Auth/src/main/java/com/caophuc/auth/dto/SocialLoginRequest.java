@@ -9,4 +9,5 @@ public class SocialLoginRequest {
 
     // Chỉ rõ nhà cung cấp là ai (GOOGLE, FACEBOOK)
     private String provider;
+
 }
