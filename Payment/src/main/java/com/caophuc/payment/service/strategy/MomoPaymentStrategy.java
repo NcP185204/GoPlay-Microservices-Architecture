@@ -1,9 +1,11 @@
 package com.caophuc.payment.service.strategy;
 
+import com.caophuc.payment.config.MomoConfig;
 import com.caophuc.payment.dto.MomoCreatePaymentRequest;
 import com.caophuc.payment.dto.MomoCreatePaymentResponse;
 import com.caophuc.payment.dto.PaymentResponse;
-import org.springframework.beans.factory.annotation.Value;
+import com.caophuc.payment.service.PaymentStrategy;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,27 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor // Lombok sẽ tự tạo constructor cho các trường final
 public class MomoPaymentStrategy implements PaymentStrategy {
 
-    @Value("${momo.partner-code:MOMO}")
-    private String partnerCode;
-
-    @Value("${momo.access-key:ACCESS_KEY}")
-    private String accessKey;
-
-    @Value("${momo.secret-key:SECRET_KEY}")
-    private String secretKey;
-
-    @Value("${momo.endpoint:https://test-payment.momo.vn/v2/gateway/api/create}")
-    private String endpoint;
-
-    @Value("${momo.return-url:http://localhost:8080/api/payments/momo/return}")
-    private String returnUrl;
-
-    @Value("${momo.notify-url:http://localhost:8080/api/payments/momo/success}")
-    private String notifyUrl;
-
-    private final RestTemplate restTemplate = new RestTemplate();
+    // Inject các dependency qua constructor
+    private final MomoConfig momoConfig;
+    private final RestTemplate restTemplate;
 
     @Override
     public String getPaymentMethodName() {
@@ -52,36 +39,31 @@ public class MomoPaymentStrategy implements PaymentStrategy {
             String requestId = UUID.randomUUID().toString();
             String orderInfo = "Thanh toán đặt sân GoPlay";
             String requestType = "captureWallet";
-            
-            // MoMo khuyên dùng Base64 rỗng hoặc chuỗi rỗng cho extraData nếu không có
-            String extraData = ""; 
+            String extraData = "";
 
-            // 1. Tạo chuỗi dữ liệu (raw hash)
-            // LƯU Ý QUAN TRỌNG: Thứ tự các key PHẢI theo đúng bảng chữ cái (Alphabetical Order)
-            String rawHash = "accessKey=" + accessKey +
+            // Lấy giá trị từ momoConfig thay vì @Value
+            String rawHash = "accessKey=" + momoConfig.getAccessKey() +
                     "&amount=" + amountStr +
                     "&extraData=" + extraData +
-                    "&ipnUrl=" + notifyUrl +
+                    "&ipnUrl=" + momoConfig.getIpnUrl() +
                     "&orderId=" + orderId +
                     "&orderInfo=" + orderInfo +
-                    "&partnerCode=" + partnerCode +
-                    "&redirectUrl=" + returnUrl +
+                    "&partnerCode=" + momoConfig.getPartnerCode() +
+                    "&redirectUrl=" + momoConfig.getRedirectUrl() +
                     "&requestId=" + requestId +
                     "&requestType=" + requestType;
 
-            // 2. Tạo chữ ký
-            String signature = hmacSHA256(rawHash, secretKey);
+            String signature = hmacSHA256(rawHash, momoConfig.getSecretKey());
 
-            // 3. Dùng DTO để tạo Request Body
             MomoCreatePaymentRequest requestBody = MomoCreatePaymentRequest.builder()
-                    .partnerCode(partnerCode)
+                    .partnerCode(momoConfig.getPartnerCode())
                     .partnerName("Test")
                     .storeId("MomoTestStore")
                     .requestType(requestType)
-                    .ipnUrl(notifyUrl)
-                    .redirectUrl(returnUrl)
+                    .ipnUrl(momoConfig.getIpnUrl())
+                    .redirectUrl(momoConfig.getRedirectUrl())
                     .orderId(orderId)
-                    .amount(amountLong) // Truyền Long thay vì String
+                    .amount(amountLong)
                     .lang("vi")
                     .orderInfo(orderInfo)
                     .requestId(requestId)
@@ -89,41 +71,35 @@ public class MomoPaymentStrategy implements PaymentStrategy {
                     .signature(signature)
                     .build();
 
-            // 4. Cấu hình Headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<MomoCreatePaymentRequest> entity = new HttpEntity<>(requestBody, headers);
 
-            // 5. Gửi POST Request và hứng dữ liệu bằng DTO Response
             ResponseEntity<MomoCreatePaymentResponse> response = restTemplate.postForEntity(
-                    endpoint,
+                    momoConfig.getEndpointUrl(),
                     entity,
                     MomoCreatePaymentResponse.class
             );
 
             MomoCreatePaymentResponse responseBody = response.getBody();
 
-            // 6. Xử lý kết quả
             if (responseBody != null && responseBody.getResultCode() != null) {
-                if (responseBody.getResultCode() == 0) { // Thành công
+                if (responseBody.getResultCode() == 0) {
                     return PaymentResponse.builder()
                             .paymentUrl(responseBody.getPayUrl())
                             .message("Tạo link thanh toán Momo thành công.")
                             .build();
                 } else {
-                    System.err.println("Lỗi từ MoMo: " + responseBody.getMessage() + " | Raw Response: " + responseBody);
                     throw new RuntimeException("Lỗi từ MoMo: " + responseBody.getMessage());
                 }
             }
             throw new RuntimeException("Không nhận được phản hồi hợp lệ từ MoMo");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi tạo yêu cầu thanh toán MoMo: " + e.getMessage());
+            throw new RuntimeException("Lỗi khi tạo yêu cầu thanh toán MoMo: " + e.getMessage(), e);
         }
     }
 
-    // Hàm tiện ích để mã hóa HMAC SHA256 (Chuẩn của MoMo)
     private String hmacSHA256(String data, String key) throws Exception {
         Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
         SecretKeySpec secret_key = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
