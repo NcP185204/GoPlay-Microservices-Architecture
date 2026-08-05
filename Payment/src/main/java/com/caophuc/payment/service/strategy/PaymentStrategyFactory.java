@@ -1,5 +1,7 @@
 package com.caophuc.payment.service.strategy;
 
+import com.caophuc.payment.exception.PaymentMethodNotFoundException;
+import com.caophuc.payment.service.PaymentStrategy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,7 +22,8 @@ public class PaymentStrategyFactory {
     public PaymentStrategy getStrategy(String method) {
         PaymentStrategy strategy = strategies.get(method.toUpperCase());
         if (strategy == null) {
-            throw new IllegalArgumentException("Phương thức thanh toán không được hỗ trợ: " + method);
+            // SỬA LẠI ĐÂY: Ném ra exception tùy chỉnh của chúng ta
+            throw new PaymentMethodNotFoundException("Payment method '" + method + "' not supported");
         }
         return strategy;
     }

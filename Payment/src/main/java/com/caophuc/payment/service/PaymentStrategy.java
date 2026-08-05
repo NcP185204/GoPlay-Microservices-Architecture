@@ -1,4 +1,4 @@
-package com.caophuc.payment.service.strategy;
+package com.caophuc.payment.service;
 
 import com.caophuc.payment.dto.PaymentResponse;
 
